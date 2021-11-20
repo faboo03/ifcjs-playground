@@ -89309,11 +89309,15 @@ const ifcLoader = new IFCLoader();
 ifcLoader.ifcManager.setWasmPath("../wasm/");
 
   const input = document.getElementById("file-input");
+  const hero =  document.getElementById("hero");
   input.addEventListener(
     "change",
     (changed) => {
       const ifcURL = URL.createObjectURL(changed.target.files[0]);
-      ifcLoader.load(ifcURL, (ifcModel) => scene.add(ifcModel.mesh));
+      ifcLoader.load(ifcURL, (ifcModel) => { 
+          scene.add(ifcModel);          
+          hero.remove();
+        });
     },
     false
   );

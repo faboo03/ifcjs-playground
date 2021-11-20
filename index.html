@@ -25,23 +25,22 @@
         </header>
       </div>    
 
-      <section class="py-5 text-center container">
+      <section class="py-5 text-center container" id="hero">
         <div class="row py-lg-5">
           <div class="col-lg-6 col-md-8 mx-auto">
             <h1 class="fw-light">IFC Analyse POC</h1>
             <p class="lead">Petit POC pour tester IFC.JS et ses potentiels sorties</p>
-            <p class="quote text-start">
-              <span>TODO :</span>
-              <ul class=" text-start">
-                <li>[X] - Load IFC</li>
-                <li>[X] - Display in Three view</li>
-                <li>[ ] - Load to JSON file </li>
-                <li>[ ] - Display by node with D3.js </li>
-              </ul>
-            </p>
+            <form>
+              <input type="file" name="load" id="file-input" />
+            </form>
           </div>
         </div>
       </section>      
+
+        <div class="row py-lg-5">
+          <canvas id="three-canvas"></canvas>                        
+        </div>
+
       <div class="container">
         <footer class="d-flex flex-wrap justify-content-between align-items-center py-3 my-4 border-top">
           <div class="col-md-4 d-flex align-items-center">
