@@ -89240,6 +89240,69 @@ class IFCLoader extends Loader {
 
 }
 
+const geometryTypes = new Set([
+    "IfcCartesianPoint",
+    "IfcArbitraryClosedProfileDef",
+    "IfcDirection",
+    "IfcAxis2Placement3D",
+    "IfcAxis2Placement2D",
+    "IfcLocalPlacement",
+    "IfcShapeRepresentation",
+    "IfcRectangleProfileDef",
+    "IfcPolyline",
+    "IfcPlane",
+    "IfcExtrudedAreaSolid",
+    "IfcSurfaceStyleRendering",
+    "IfcSurfaceStyle",
+    "IfcPresentationStyleAssignment",
+    "IfcStyledRepresentation",
+    "IfcCartesianTransformationOperator3D",
+    "IfcColourRgb",
+    "IfcCartesianTransformationOperator3DNonUniform",
+    "IfcStyledItem",
+    "IfcCurveBoundedPlane",
+    "IfcConnectionSurfaceGeometry",
+    "IfcProductDefinitionShape",
+    "IfcGeometricRepresentationContext",
+    "IfcGeometricRepresentationSubcontext",
+    "IfcPolyLoop",
+    "IfcFaceOuterBound",
+    "IfcFace",
+    "IfcCartesianTransformationOperator3DnonUniform",
+    "IfcFaceBound",
+    "IfcClosedShell",
+    "IfcFacetedBrep",
+    "IfcRepresentationMap",
+    "IfcMappedItem",
+    "IfcRelFillsElement",
+    "IfcArbitraryProfileDefWithVoids",
+    "IfcCompositeCurve",
+    "IfcCompositeCurveSegment",
+    "IfcCircle",
+    "IfcEllipse",
+    "IfcCircleHollowProfileDef",
+    "IfcRectangleHollowProfileDef",
+    "IfcLine",
+    "IfcIShapeProfileDef",
+    "IfcGeometricRepresentationContext",
+    "IfcGeometricRepresentationSubContext",
+    "IfcCurveStyle",
+    "IfcDraughtingPreDefinedCurveFont",
+    "IfcGeometricSet",
+    "IfcCircleProfileDef",
+    "IfcPolygonalBoundedHalfSpace",
+    "IfcFaceBasedSurfaceModel",
+    "IfcConnectedFaceSet",
+    "IfcTrimmedCurve",
+    "IfcOpenShell",
+    "IfcShellBasedSurfaceModel",
+    "IfcHalfSpaceSolid",
+    "IfcBooleanClippingResult",
+    "IfcGeometricCurveSet",
+    "IfcCurveStyleFont",
+    "IfcCurveStyleFontPattern"
+]);
+
 //Creates the Three.js scene
 const scene = new Scene();
 
@@ -89304,20 +89367,85 @@ window.addEventListener("resize", () => {
   renderer.setSize(size.width, size.height);
 });
 
+
+
+
+
+
+
 //Sets up the IFC loading
 const ifcLoader = new IFCLoader();
 ifcLoader.ifcManager.setWasmPath("../wasm/");
+const ifcapi = new IfcAPI();
+ifcapi.SetWasmPath("../wasm/");
 
   const input = document.getElementById("file-input");
-  const hero =  document.getElementById("hero");
+  document.getElementById("hero");
+
+
+  /* 
   input.addEventListener(
     "change",
     (changed) => {
       const ifcURL = URL.createObjectURL(changed.target.files[0]);
-      ifcLoader.load(ifcURL, (ifcModel) => { 
+      console.log(ifcURL);
+      ifcLoader.load(ifcURL, (ifcModel) => {
           scene.add(ifcModel);          
           hero.remove();
         });
     },
     false
   );
+  */
+
+input.addEventListener(
+    "change",
+    (changed) => {
+        const reader = new FileReader();
+        reader.onload = () => LoadFile(reader.result);
+        reader.readAsText(changed.target.files[0]);
+    },
+    false
+);
+
+async function LoadFile(ifcAsText) {
+    ifcAsText.replace(/(?:\r\n|\r|\n)/g, '<br>');
+    const modelID = await OpenIfc(ifcAsText);
+    const allItems = GetAllItems(modelID);
+    const result = JSON.stringify(allItems, undefined, 2);
+
+    console.log(result);
+
+    ifcapi.CloseModel(modelID);
+}
+
+async function OpenIfc(ifcAsText) {
+    await ifcapi.Init();
+    return ifcapi.OpenModel(ifcAsText);
+}
+
+function GetAllItems(modelID, excludeGeometry = true) {
+    const allItems = {};
+    const lines = ifcapi.GetAllLines(modelID);
+    getAllItemsFromLines(modelID, lines, allItems, excludeGeometry);
+    return allItems;
+}
+
+function getAllItemsFromLines(modelID, lines, allItems, excludeGeometry) {
+    for (let i = 1; i <= lines.size(); i++) {
+        try {
+            saveProperties(modelID, lines, allItems, excludeGeometry, i);
+        } catch (e) {
+            console.log(e);
+        }
+    }
+}
+
+function saveProperties(modelID, lines, allItems, excludeGeometry, index) {
+    const itemID = lines.get(index);
+    const props = ifcapi.GetLine(modelID, itemID);
+    props.type = props.__proto__.constructor.name;
+    if (!excludeGeometry || !geometryTypes.has(props.type)) {
+        allItems[itemID] = props;
+    }
+}
